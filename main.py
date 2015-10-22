@@ -26,9 +26,23 @@ async def exhaust_stream_reader(stream_reader, name, input):
         print(formatted_msg, flush=True)
 
 
-async def custom_subprocess(subprocess_command, name):
-    proc = await asyncio.create_subprocess_exec(
-        *subprocess_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+async def custom_subprocess(subprocess_command, name, shell=False, cwd=None):
+    if shell:
+        create = asyncio.create_subprocess_shell(
+            subprocess_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+        )
+    else:
+        create = asyncio.create_subprocess_exec(
+            *subprocess_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+        )
+
+    proc = await create
 
     asyncio.wait([
         asyncio.ensure_future(exhaust_stream_reader(proc.stdout, name, 'out')),
